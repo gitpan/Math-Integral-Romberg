@@ -1,18 +1,33 @@
 # -*- perl -*-
 
 package Math::Integral::Romberg;
+
 require Exporter;
-@ISA=qw(Exporter);
-@EXPORT_OK=qw(integral return_point_count);
-$VERSION = "0.01";
-$abort = 0;
-$return_point_count = 0;
 
 use strict;
 
+use vars qw( @ISA @EXPORT @EXPORT_OK );
+
+@ISA       = qw(Exporter);
+@EXPORT    = qw();
+@EXPORT_OK = qw(integral return_point_count);
+
+use vars qw( $VERSION $abort $return_point_count
+	     $rel_err $abs_err $max_split $min_split );
+
+$VERSION = "0.02";
+
+$abort = 0;
+$return_point_count = 0;
+
+$rel_err   = 1e-10;
+$abs_err   = 1e-20;
+$max_split = 16;
+$min_split = 5;
+
 =head1 NAME
 
-  Math::Integral::Romberg - single-variable numerical integration
+  Math::Integral::Romberg - scalar numerical integration
 
 =head1 SYNOPSIS
 
@@ -21,10 +36,17 @@ use strict;
     $area = integral                    # Long form
      (\&f, $x1, $x2, $rel_err, $abs_err, $max_split, $min_split);
 
+    # an alternative way of doing the long form
+    $Math::Integral::Romberg::rel_err = $rel_err;
+    $Math::Integral::Romberg::abs_err = $abs_err;
+    $Math::Integral::Romberg::max_split = $max_split;
+    $Math::Integral::Romberg::min_split = $min_split;
+    $area = integral(\&f, $x1, $x2);
+
 =head1 DESCRIPTION
 
-integral() numerically estimates the integral of f() using Romberg's
-method, a faster relative of Simpson's method.
+integral() numerically estimates the integral of f() using Romberg
+integration, a faster relative of Simpson's method.
 
 =head2 Parameters
 
@@ -34,45 +56,52 @@ method, a faster relative of Simpson's method.
 
 A reference to the function to be integrated.
 
-=item $x1
-
-=item $x2
+=item $x1, $x2
 
 The two extreme values of the range to be integrated.  C<&$f(x)> must be
 finite at $x1 and $x2.
 
 =item $rel_err
 
-Maximum acceptable relative error (default: 10**-15, which is close to
-the accuracy limits of double-precision floating point).  Estimates of
+Maximum acceptable relative error . Estimates of
 relative and absolute error are based on a comparison of the estimate
 computed using C<2**n + 1> points with the estimate computed using
 C<2**(n-1) + 1> points.
 
-Once $min_split has been reached, computation stops as soon as
-relative error drops below $rel_err, absolute error drops below
-$abs_err, or $max_split is reached.
+Once $min_split has been reached (see below), computation stops as
+soon as relative error drops below $rel_err, absolute error drops
+below $abs_err, or $max_split is reached.
+
+If not supplied, uses the value B<$Math::Integral::Romberg::rel_err>
+whose default is 10**-10. A value of 10**-15 is close to
+the accuracy limits of double-precision floating point.
 
 =item $abs_err
 
-Maximum acceptable absolute error (default: 10**-40).
+Maximum acceptable absolute error. If not supplied uses
+B<$Math::Integral::Romberg::abs_err>, which defaults to
+10**-20.
 
 =item $max_split
 
 At most C<2 ** $max_split + 1> different sample x values are used to
-estimate the integral of C<f()>.
+estimate the integral of C<f()>. If not supplied, uses the value of
+B<$Math::Integral::Romberg::max_split>, which defaults to 16,
+corresponding to 65537 sample points.
 
 =item $min_split
 
 At least C<2 ** $min_split + 1> different sample x values are used to
-estimate the integral of C<f()>.
+estimate the integral of C<f()>. If not supplied, uses the value of
+B<$Math::Integral::Romberg::max_split>, which defaults to 5,
+corresponding to 33 sample points.
 
 =item $Math::Integral::Romberg::return_point_count
 
 This value defaults to 0.  If you set it to 1, then when invoked in a
 list context, integral() will return a two-element list, containing
-the estimate followed by the number of different x values used to
-compute the estimate.
+the estimate followed by the number of sample points used to compute
+the estimate.
 
 =item $Math::Integral::Romberg::abort
 
@@ -81,6 +110,13 @@ thresholds are reached before computation stops.  Once set, this
 variable remains set until you reset it to 0.
 
 =back
+
+=head2 Default values
+
+Using the long form of integral() sets the convergence parameters
+for that call only - you must use the package-qualified variable
+names (e.g. $Math::Integral::Romberg::abs_tol) to change the values
+for all calls.
 
 =head2 About the Algorithm
 
@@ -105,11 +141,11 @@ sub integral {
   my ($f,$lo,$hi,$rel_err,$abs_err,$max_split,$min_split)=@_;
   ($lo, $hi) = ($hi, $lo) if $lo > $hi;
   
-  $rel_err	||= 1e-15;
-  $abs_err	||= 1e-40;
-  $max_split	||= 16;
-  $min_split	||= 5;
-  
+  $rel_err	||= $Math::Integral::Romberg::rel_err;
+  $abs_err	||= $Math::Integral::Romberg::abs_err;
+  $max_split	||= $Math::Integral::Romberg::max_split;
+  $min_split	||= $Math::Integral::Romberg::min_split;
+
   my ($estimate, $split, $steps);
   my $step_len = $hi - $lo;
   my $tot = (&$f($lo) + &$f($hi))/2;
