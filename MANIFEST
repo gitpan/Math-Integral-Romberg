@@ -1,5 +1,7 @@
 MANIFEST
 README
-Release
-Makefile.PL
-Romberg.pm
+Changes
+Build.PL
+lib/Math/Integral/Romberg.pm
+t/misc.t
+META.yml

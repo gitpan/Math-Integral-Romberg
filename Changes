@@ -11,5 +11,7 @@ relative tolerances) to be set using package variables as well as
 optional parameters. The default values have also been made less
 stringent.  (Doug Burke)
 
+Version 0.03 -- same as 0.02, but with tests and updated packaging.
+
 Eric Boesch
-ebo@dannet.dk
+ericboesch@gmail.com
