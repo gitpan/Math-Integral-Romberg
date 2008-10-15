@@ -15,7 +15,7 @@ use vars qw( @ISA @EXPORT @EXPORT_OK );
 use vars qw( $VERSION $abort $return_point_count
 	     $rel_err $abs_err $max_split $min_split );
 
-$VERSION = "0.03";
+$VERSION = "0.04";
 
 $abort = 0;
 $return_point_count = 0;
